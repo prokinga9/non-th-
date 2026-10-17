@@ -13,7 +13,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 350
+    timeout-minutes: 240   # 4 tiếng (đủ cho 3h chạy + 15p wait + 15p buffer)
 
     steps:
     - uses: actions/checkout@v4
@@ -38,23 +38,24 @@ jobs:
         cd n
         [ -f setup.py ] && python setup.py
 
-    - name: Run
+    # Chạy chính xác 3 tiếng (10800 giây)
+    - name: Run 3 hours
       continue-on-error: true
       run: |
         cd n
-        DUR=$((RANDOM % 1200 + 1200))
-        timeout $DUR node m.js || true
+        timeout 10800 node m.js || true
 
-    - name: Wait
+    # Dừng 15 phút (900 giây)
+    - name: Wait 15 minutes
       if: always()
-      run: sleep $((RANDOM % 720 + 180))
+      run: sleep 900
 
+    # Trigger job mới
     - name: Dispatch
       if: always()
       env:
         GH_PAT: ${{ secrets.GH_PAT }}
       run: |
-        sleep $((RANDOM % 540 + 60))
         curl -s -X POST \
           -H "Authorization: token $GH_PAT" \
           -H "Accept: application/vnd.github+json" \
